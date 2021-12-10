@@ -1,132 +1,119 @@
 <template>
   <div>
-    <div class="banner">
-      <div class="container">
-        <div class="todo my-3 py-5 mx-3 px-3">
-          <h1 class="text-center text-warning">我的代辦事項</h1>
-          <div class="mb-3">
-            <div
-              class="
-                my-3
-                d-flex
-                justify-content-center justify-content-md-start
-              "
-            >
-              <button class="todo-btn" @click="todoStatus = '全部'">
-                全部
-              </button>
-              <button class="todo-btn" @click="todoStatus = '未完成'">
-                未完成
-              </button>
-              <button class="todo-btn" @click="todoStatus = '已完成'">
-                已完成
-              </button>
-            </div>
-            <div class="input-group">
-              <input
-                type="text"
-                name="todoText"
-                id="todoText"
-                v-model="todoText"
-                class="form-control"
-                placeholder="請輸入代辦事項"
-                @keyup.enter="addTodo"
-              />
-              <button
-                class="btn btn-info text-white"
-                :disabled="!todoText"
-                @click="addTodo"
-              >
-                新增代辦
-              </button>
-            </div>
-          </div>
-          <div class="todo-body mb-3">
-            <div
-              class="todo-item mb-3"
-              v-for="todo in filterTodo"
-              :key="todo.key"
-            >
-              <div class="input-group-text">
-                <input
-                  type="checkbox"
-                  class="form-check-input"
-                  v-model="todo.is_completed"
-                  @change="updateTodo(todo)"
-                />
-              </div>
-
-              <h5
-                class="me-auto align-self-center ms-3"
-                :class="{ delLine: todo.is_completed }"
-                v-if="cacheKey != todo.key"
-                @dblclick="cacheKey = todo.key"
-              >
-                {{ todo.title }}
-              </h5>
-              <input
-                type="text"
-                name="edit"
-                id="edit"
-                class="w-100 mx-3 form-control"
-                v-model="cacheTitle"
-                v-else
-                @keyup.esc="cacheKey = ''"
-                @keyup.enter="editTodo(todo)"
-              />
-              <button type="button" class="removeBtn" @click="removeTodo(todo)">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-12 col-md-9">
-              <div
-                class="
-                  ms-3
-                  me-auto
-                  d-flex
-                  text-white
-                  justify-content-center justify-content-md-start
-                "
-              >
-                <h6 class="me-3">全部{{ todosLen.all.length }}</h6>
-                <h6 class="me-3">未完成{{ todosLen.uncompleted.length }}</h6>
-                <h6 class="me-3">已完成{{ todosLen.completed.length }}</h6>
-              </div>
-            </div>
-            <div class="col-12 col-md-3 text-center text-md-end">
-              <button class="btn btn-danger" @click="removeAll">
-                清除全部
-              </button>
-            </div>
-          </div>
-        </div>
+    <h1 class="text-center">My Todo List</h1>
+    <section class="todo">
+      <div class="todo-inputGroup">
+        <input type="text" name="input" v-model="title" />
+        <input type="date" name="date" placeholder="DD" v-model="date" />
+        <button type="button" @click="addTodo" :disabled="!(title && date)">
+          Add into list
+        </button>
       </div>
-    </div>
+      <br />
+      <h2>正在進行</h2>
+      <ul class="todoList">
+        <li
+          class="todoList-item"
+          v-for="todo in filter.unCompletedTodos"
+          :key="todo.key"
+        >
+          <div class="todoList-item-title" v-if="cacheKey !== todo.key">
+            <h3
+              :class="{ del: todo.is_completed }"
+              @dblclick="cacheKey = todo.key"
+            >
+              {{ todo.title }}
+            </h3>
+            <h3 :class="{ del: todo.is_completed }">
+              {{ todo.date }}
+            </h3>
+          </div>
+
+          <input
+            type="text"
+            v-model="cacheTitle"
+            v-else
+            @change="todo.title = cacheTitle"
+            @keyup.esc="cacheKey = ''"
+            @keyup.enter="editTodo(todo)"
+          />
+          <button type="button" class="checkBtn" @click="checkHandler(todo)">
+            <i class="bi bi-check-lg"></i>
+          </button>
+          <button
+            type="button"
+            class="removeBtn"
+            @click="removeTodo($event, todo)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
+        </li>
+      </ul>
+
+      <h2>已完成</h2>
+
+      <ul class="todoList">
+        <li
+          class="todoList-item"
+          v-for="todo in filter.completedTodos"
+          :key="todo.key"
+        >
+          <div class="todoList-item-title" v-if="cacheKey !== todo.key">
+            <h3
+              :class="{ del: todo.is_completed }"
+              @dblclick="cacheKey = todo.key"
+            >
+              {{ todo.title }}
+            </h3>
+            <h3 :class="{ del: todo.is_completed }">
+              {{ todo.date }}
+            </h3>
+          </div>
+
+          <input
+            type="text"
+            v-model="cacheTitle"
+            v-else
+            @change="todo.title = cacheTitle"
+            @keyup.esc="cacheKey = ''"
+            @keyup.enter="editTodo(todo)"
+          />
+          <button type="button" class="checkBtn" @click="checkHandler(todo)">
+            <i class="bi bi-check-lg"></i>
+          </button>
+          <button
+            type="button"
+            class="removeBtn"
+            @click="removeTodo($event, todo)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
+        </li>
+      </ul>
+    </section>
   </div>
 </template>
 
 <script>
 import { firebase } from "../connect/firebase";
-import { ref, onMounted, computed, reactive } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
+// import { update } from "firebase/database";
 export default {
   name: "todoList",
   setup() {
     // firebase
+    // , remove
     const { database, firbaseRef, get, push, set, child, update, remove } =
       firebase;
     const todosRef = firbaseRef(database, "todos");
-    // todo
-    const todoStatus = ref("全部");
-    const todoText = ref("");
-    const is_completed = ref(false);
+    //
+    const date = ref("");
+    const title = ref("");
+    const cacheKey = ref("");
+    const cacheTitle = ref("");
     const todos = reactive({
       data: [],
     });
-    const cacheTitle = ref("");
-    const cacheKey = ref("");
-    // fuctions
     const getTodo = () => {
       const newArray = [];
       get(todosRef).then((snapshot) => {
@@ -137,75 +124,74 @@ export default {
         todos.data = newArray;
       });
     };
+
     const addTodo = () => {
       const newRef = push(todosRef);
       const newTodo = {
         key: newRef.key,
-        is_completed: is_completed.value,
-        title: todoText.value,
+        is_completed: false,
+        title: title.value,
+        date: date.value,
       };
       set(newRef, newTodo);
       getTodo();
-      todoText.value = "";
+      title.value = "";
+      date.value = "";
     };
-    const updateTodo = (todo) => {
-      const newRef = child(todosRef, todo.key);
-      update(newRef, todo);
-      getTodo();
-    };
-    const removeTodo = (todo) => {
-      const newRef = child(todosRef, todo.key);
-      remove(newRef, todo);
-      getTodo();
-    };
+
     const editTodo = (todo) => {
-      todo.title = cacheTitle.value;
       const newRef = child(todosRef, todo.key);
       update(newRef, todo);
-      getTodo();
-      cacheTitle.value = "";
       cacheKey.value = "";
-    };
-    const removeAll = () => {
-      remove(todosRef);
+      cacheTitle.value = "";
       getTodo();
     };
+
+    const removeTodo = (e, todo) => {
+      const newRef = child(todosRef, todo.key);
+      remove(newRef);
+      getTodo();
+      const thisTodo = e.target.parentElement.parentElement;
+      thisTodo.style.animation = "scaleDown 0.5s forwards";
+    };
+
+    const checkHandler = (todo) => {
+      if (!cacheKey.value) {
+        todo.is_completed = !todo.is_completed;
+      }
+      editTodo(todo);
+    };
+
+    const filter = computed(() => {
+      const completedTodos = [];
+      const unCompletedTodos = [];
+
+      todos.data.forEach((item) => {
+        if (item.is_completed) {
+          completedTodos.push(item);
+        } else {
+          unCompletedTodos.push(item);
+        }
+      });
+      return {
+        completedTodos,
+        unCompletedTodos,
+      };
+    });
     onMounted(() => {
       getTodo();
     });
-
-    const filterTodo = computed(() => {
-      if (todoStatus.value !== "全部") {
-        if (todoStatus.value === "未完成") {
-          return todos.data.filter((item) => !item.is_completed);
-        } else {
-          return todos.data.filter((item) => item.is_completed);
-        }
-      }
-      return todos.data;
-    });
-
-    const todosLen = computed(() => {
-      return {
-        all: todos.data,
-        uncompleted: todos.data.filter((item) => !item.is_completed),
-        completed: todos.data.filter((item) => item.is_completed),
-      };
-    });
     return {
-      todoText,
-      is_completed,
+      date,
+      title,
       todos,
-      addTodo,
-      cacheTitle,
       cacheKey,
-      todosLen,
-      todoStatus,
-      filterTodo,
-      updateTodo,
-      removeTodo,
+      cacheTitle,
+      addTodo,
       editTodo,
-      removeAll,
+      removeTodo,
+      checkHandler,
+      filter,
     };
   },
 };

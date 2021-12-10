@@ -1,10 +1,12 @@
 <template>
-  <todoList />
+  <div class="wrapper">
+    <todoList />
+  </div>
 </template>
 
 <script>
 import todoList from "./components/todoList.vue";
-
+import "node/bootstrap-icons/font/bootstrap-icons.css";
 export default {
   name: "App",
   components: {
